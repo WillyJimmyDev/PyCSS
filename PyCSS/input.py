@@ -2,14 +2,51 @@
 
 import glob
 import re
+import os
+from html.parser import HTMLParser
 
-classholder = []
-idholder = []
+
+linkedcss = []
+
+
+htmlclasses = []
+htmlids = []
+cssclasses = []
+cssids = []
+
+class MyHTMLParser(HTMLParser):
+    def handle_starttag(self, tag, attrs):
+        
+        if (tag == 'link'):
+            
+            for attr in attrs:
+                
+                if (attr[0] == 'href'):
+                    
+                    extension = os.path.splitext(attr[1])[1]
+                    if (extension == '.css'):
+                        
+                        cssfile = os.path.abspath((userdir + attr[1]))
+                        linkedcss.append(cssfile)
+                        
+                        csshandle = open(cssfile, "r")
+                        csscontent = csshandle.readlines()
+                        for line in csscontent:
+                            words = line.split()
+                            for word in words:
+                                if word.startswith("."):
+                                    print (word)
+                                    cssclasses.append(word)
+                                    
+                                if word.startswith("#"):
+                                    print (word)
+                                    cssids.append(word)
 
 userdir = input("Enter a directory to search\n")
 userexts = input("Enter a comma separated list of file extensions to search in e.g php,html\n")
 
-print(userexts)
+parser = MyHTMLParser(strict=False)
+
 exts = userexts.split(",")
 
 for ext in exts:
@@ -27,20 +64,20 @@ for ext in exts:
         idfound = False
         
         for line in content:
-
+            parser.feed(line)
             classes = re.findall(r'class=\"(.+?)\"', line)
             if classes:
                 classfound = True
-                for cssclass in classes:
-                    print(" class found -> .", cssclass, " on line ", linenum, sep='')
-                    classholder.append(cssclass)
+                for htmlclass in classes:
+                    print(" class found -> .", htmlclass, " on line ", linenum, sep='')
+                    htmlclasses.append(htmlclass)
             
             ids = re.findall(r'id=\"(.+?)\"', line)
             if ids:
                 idfound = True
-                for cssid in ids:
-                    print(" id found -> #", cssid, " on line ", linenum,sep='')
-                    idholder.append(cssid)
+                for htmlid in ids:
+                    print(" id found -> #", htmlid, " on line ", linenum,sep='')
+                    htmlids.append(htmlid)
                     
             linenum = linenum + 1
             
@@ -50,9 +87,9 @@ for ext in exts:
         if not idfound:
             print("no ids found in file")
 
-# holder now holds all classes mentioned in the files
-print("class list is ", classholder)
-print("id list is ", idholder)
-
+print(linkedcss)
+print("html class list is ", htmlclasses)
+print("html id list is ", htmlids)
+print("css class list is ", cssclasses)
+print("css id list is ", cssids)
 #need multi-demensional array to hold filename, line number of occurrence ,class name, id name etc
-#need a list of all css files linked to from file
