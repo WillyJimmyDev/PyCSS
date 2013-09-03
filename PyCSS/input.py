@@ -47,7 +47,6 @@ class MyHTMLParser(HTMLParser):
                                     
     def handle_endtag(self, tag):
         if tag == 'head':
-            #print("end tag is",tag)
             stopparsing = True
 
 userdir = input("Enter a directory to search\n")
