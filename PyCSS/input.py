@@ -99,21 +99,50 @@ for ext in exts:
         if cssfound:
             html[file] = filecss 
             
-print("html list is ", set(html.keys()))
-print("css list is ", set(css.keys()))
+#print("html list is ", set(html.keys()))
+#print("css list is ", set(css.keys()))
 
-print(html)
-print("dict of files with linked css files and classes/line numbers therein", css)
+# print(html) # dict of files with html classes and/or ids
+# print("dict of files with linked css files and classes/line numbers therein", css)
 
-for fileid,cssitems in css.items():
-    print("    The file is",fileid)
-    # loop through the html file ids and classes here
-    for k,v in cssitems.items():
-        print("        linked css file is .",k, sep='')
-        for c,l in v.items():
-            print("            css is ",c, " found on line ", l, sep='')
-        
-htmlfiles = set(html.keys())
-cssfiles = set(css.keys())
-combinedfiles = cssfiles.intersection(htmlfiles)
-print("in both", combinedfiles)
+# for fileid,cssitems in css.items():
+#     print("    The file is",fileid)
+#     # loop through the html file ids and classes here?
+#     for k,v in cssitems.items():
+#         print("        linked css file is .",k, sep='')
+#         for c,l in v.items():
+#             print("            css is ",c, " found on line ", l, sep='')
+
+for file in html:
+    
+    print("processing", file)
+    used = []
+    unused = []
+    
+    if file in css:
+        #print("base file is", file)
+        for c,s in css[file].items():
+            #print("    css file linked to is", c)
+            
+            for i,l in s.items():
+                #print("        css class/id found :", i, "on line", l)
+                if i in html[file]:
+                    used.append(i)
+                    #print("            ", html[file])
+                else:
+                    unused.append(i)
+                    #print("            css not used in base file")
+    if used:
+        print("used css:")
+        for l,u in enumerate(used):
+            print("    ", u, "on line", l)
+    if unused:
+        print("unused css:")
+        for l,u in enumerate(unused):
+            print("    ", u, "on line", l)
+                        
+# htmlfiles = set(html.keys())
+# cssfiles = set(css.keys())
+# combinedfiles = cssfiles.intersection(htmlfiles)
+# print("in both", combinedfiles)
+#now we can compare classes/ids using combinedfiles indices as css/html dict indices?
