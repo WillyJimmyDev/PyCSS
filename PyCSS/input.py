@@ -28,22 +28,32 @@ class MyHTMLParser(HTMLParser):
                     
                     extension = os.path.splitext(attr[1])[1]
                     if (extension == '.css'):
-                        
-                        cssfile = os.path.abspath((userdir + attr[1]))
+                    
+                        newfile = os.path.join(os.path.dirname(self.afile), attr[1])
+
+                        cssfile = os.path.abspath(newfile)
+                        print("html file is", self.afile)
+                        print("cssfile is", cssfile)
                         
                         self.cssfound[cssfile] = {}
-                        
-                        csshandle = open(cssfile, "r")
-                        csscontent = csshandle.readlines()
-                        csslinenum = 0
-                        for line in csscontent:
-                            
-                            words = line.split()
-                            for word in words:
-                                if word.startswith(".") or word.startswith("#"):
-                                    self.cssfound[cssfile][word] = csslinenum
-                            
-                            csslinenum = csslinenum + 1
+                        try:
+                            csshandle = open(cssfile, "r")
+                            csscontent = csshandle.readlines()
+                            csslinenum = 1
+                            for line in csscontent:
+
+                                ids = re.findall(r'^(#\w+)\s*[^;]{?', line)
+                                classes = re.findall(r'^(\.\w+)\s*{?', line)
+                                #need to test multiple ids in same line - list should be returned
+                                for theid in ids:
+                                    self.cssfound[cssfile][theid] = csslinenum
+                                #need to test multiple classes in same line - list should be returned   
+                                for theclass in classes:
+                                    self.cssfound[cssfile][theclass] = csslinenum
+                                
+                                csslinenum = csslinenum + 1
+                        except (OSError, IOError) as e:
+                            print(e.errno)
         
         if self.cssfound:                            
             css[self.afile] = self.cssfound
@@ -55,14 +65,23 @@ class MyHTMLParser(HTMLParser):
             stopparsing = True
 
 userdir = input("Enter a directory to search\n")
+
 userexts = input("Enter a comma separated list of file extensions to search in e.g php,html\n")
+
 
 exts = userexts.split(",")
 
 for ext in exts:
     print ("Searching file extension... ", ext)
 
-    files = glob.glob(userdir + "*." + ext)
+    #if non-recursive flag
+    #files = glob.glob(userdir + "*." + ext)
+    
+    #if recursive - default
+    files = [os.path.join(dirpath, f)
+             for dirpath, dirnames, files in os.walk(userdir)
+             for f in files if f.endswith('.' + ext)]
+    
     print("number of files searched:", len(files))
     for file in files:
         
@@ -71,47 +90,36 @@ for ext in exts:
         filecss = {}
     
         handle = open(file, "r")
-        content = handle.readlines()
-        linenum = 0
-        cssfound = False
-        
-        for line in content:
+        try:
+            content = handle.readlines()
+            linenum = 1
+            cssfound = False
             
-            if not stopparsing:
-                parser.feed(line)
+            for line in content:
                 
-            classes = re.findall(r'class=\"(.+?)\"', line)
-            if classes:
-                cssfound = True
-                for htmlclass in classes:
-                    htmlclass = "." + htmlclass
-                    filecss[htmlclass] = linenum
-            
-            ids = re.findall(r'id=\"(.+?)\"', line)
-            if ids:
-                cssfound = True
-                for htmlid in ids:
-                    htmlid = "#" + htmlid
-                    filecss[htmlid] = linenum
+                if not stopparsing:
+                    parser.feed(line)
                     
-            linenum = linenum + 1
-          
-        if cssfound:
-            html[file] = filecss 
-            
-#print("html list is ", set(html.keys()))
-#print("css list is ", set(css.keys()))
-
-# print(html) # dict of files with html classes and/or ids
-# print("dict of files with linked css files and classes/line numbers therein", css)
-
-# for fileid,cssitems in css.items():
-#     print("    The file is",fileid)
-#     # loop through the html file ids and classes here?
-#     for k,v in cssitems.items():
-#         print("        linked css file is .",k, sep='')
-#         for c,l in v.items():
-#             print("            css is ",c, " found on line ", l, sep='')
+                classes = re.findall(r'class=\"(.+?)\"', line)
+                if classes:
+                    cssfound = True
+                    for htmlclass in classes:
+                        htmlclass = "." + htmlclass
+                        filecss[htmlclass] = linenum
+                
+                ids = re.findall(r'id=\"(.+?)\"', line)
+                if ids:
+                    cssfound = True
+                    for htmlid in ids:
+                        htmlid = "#" + htmlid
+                        filecss[htmlid] = linenum
+                        
+                linenum = linenum + 1
+              
+            if cssfound:
+                html[file] = filecss 
+        except UnicodeDecodeError as e:
+            print(e)
 
 for file in html:
     
@@ -120,29 +128,26 @@ for file in html:
     unused = []
     
     if file in css:
-        #print("base file is", file)
+        
         for c,s in css[file].items():
-            #print("    css file linked to is", c)
+            print("css file is", c)
             
             for i,l in s.items():
-                #print("        css class/id found :", i, "on line", l)
+                
                 if i in html[file]:
-                    used.append(i)
-                    #print("            ", html[file])
+                    used.append({i:l})
+                    
                 else:
-                    unused.append(i)
-                    #print("            css not used in base file")
+                    unused.append({i:l})
+                    
     if used:
         print("used css:")
-        for l,u in enumerate(used):
-            print("    ", u, "on line", l)
+        for l in used:
+            for key in l:
+                print(key, "on line", l[key])
+
     if unused:
         print("unused css:")
-        for l,u in enumerate(unused):
-            print("    ", u, "on line", l)
-                        
-# htmlfiles = set(html.keys())
-# cssfiles = set(css.keys())
-# combinedfiles = cssfiles.intersection(htmlfiles)
-# print("in both", combinedfiles)
-#now we can compare classes/ids using combinedfiles indices as css/html dict indices?
+        for l in unused:
+            for key in l:
+                print(key, "on line", l[key])
