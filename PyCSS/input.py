@@ -5,10 +5,13 @@ import re
 import os
 from html.parser import HTMLParser
 
-stopparsing = False
+RECURSIVE = True
+
+STOPPARSING = False
 
 html = {}
 css = {}
+filesnotfound = {}
 
 class MyHTMLParser(HTMLParser):
     
@@ -32,28 +35,47 @@ class MyHTMLParser(HTMLParser):
                         newfile = os.path.join(os.path.dirname(self.afile), attr[1])
 
                         cssfile = os.path.abspath(newfile)
-                        print("html file is", self.afile)
-                        print("cssfile is", cssfile)
                         
                         self.cssfound[cssfile] = {}
+                        
                         try:
+                            self.cssfound[cssfile]["ids"] = {}
+                            self.cssfound[cssfile]["classes"] = {}
+                            idoccurrences = {}
+                            classoccurrences = {}
+                            
                             csshandle = open(cssfile, "r")
                             csscontent = csshandle.readlines()
                             csslinenum = 1
                             for line in csscontent:
-
+                                
                                 ids = re.findall(r'^(#\w+)\s*[^;]{?', line)
                                 classes = re.findall(r'^(\.\w+)\s*{?', line)
                                 #need to test multiple ids in same line - list should be returned
                                 for theid in ids:
-                                    self.cssfound[cssfile][theid] = csslinenum
-                                #need to test multiple classes in same line - list should be returned   
+                                    if theid not in idoccurrences:
+                                        idoccurrences[theid] = []
+                                        idoccurrences[theid].append(csslinenum)
+                                    else:
+                                        idoccurrences[theid].append(csslinenum)
                                 for theclass in classes:
-                                    self.cssfound[cssfile][theclass] = csslinenum
+                                    if theclass not in classoccurrences:
+                                        classoccurrences[theclass] = []
+                                        classoccurrences[theclass].append(csslinenum)
+                                    else:
+                                        classoccurrences[theclass].append(csslinenum)
                                 
                                 csslinenum = csslinenum + 1
-                        except (OSError, IOError) as e:
-                            print(e.errno)
+                                
+                            self.cssfound[cssfile]["ids"] = idoccurrences
+                            self.cssfound[cssfile]["classes"] = classoccurrences
+                            
+                        except (OSError, IOError):
+                            if self.afile in filesnotfound:
+                                filesnotfound[self.afile].append(cssfile)
+                            else:
+                                filesnotfound[self.afile] = []
+                                filesnotfound[self.afile].append(cssfile)
         
         if self.cssfound:                            
             css[self.afile] = self.cssfound
@@ -62,25 +84,29 @@ class MyHTMLParser(HTMLParser):
                                     
     def handle_endtag(self, tag):
         if tag == 'head':
-            stopparsing = True
+            STOPPARSING = True
 
-userdir = input("Enter a directory to search\n")
+#userdir = input("Enter a directory to search:\n")
+userdir = "/home/elanman/www/"
 
-userexts = input("Enter a comma separated list of file extensions to search in e.g php,html\n")
+while not os.path.isdir(userdir):
+    print("Can't find the specified directory\nMake sure you entered the path correctly\n")
+    userdir = input("Enter a directory to search:\n")
 
-
+#userexts = input("Enter a comma separated list of file extensions to search in e.g php,html\n")
+userexts = "html"
+    
 exts = userexts.split(",")
 
 for ext in exts:
     print ("Searching file extension... ", ext)
-
-    #if non-recursive flag
-    #files = glob.glob(userdir + "*." + ext)
     
-    #if recursive - default
-    files = [os.path.join(dirpath, f)
-             for dirpath, dirnames, files in os.walk(userdir)
-             for f in files if f.endswith('.' + ext)]
+    if RECURSIVE:
+        files = [os.path.join(dirpath, f)
+                 for dirpath, dirnames, files in os.walk(userdir)
+                 for f in files if f.endswith('.' + ext)]
+    else:
+        files = glob.glob(userdir + "*." + ext)
     
     print("number of files searched:", len(files))
     for file in files:
@@ -97,7 +123,7 @@ for ext in exts:
             
             for line in content:
                 
-                if not stopparsing:
+                if not STOPPARSING:
                     parser.feed(line)
                     
                 classes = re.findall(r'class=\"(.+?)\"', line)
@@ -123,16 +149,16 @@ for ext in exts:
 
 for file in html:
     
-    print("processing", file)
+    print("processing ...", file)
     used = []
     unused = []
     
     if file in css:
         
         for c,s in css[file].items():
-            print("css file is", c)
-            
-            for i,l in s.items():
+            print("    css file is", c)
+            #need to add css file for each used /unused
+            for i,l in s["ids"].items():
                 
                 if i in html[file]:
                     used.append({i:l})
@@ -140,14 +166,33 @@ for file in html:
                 else:
                     unused.append({i:l})
                     
+            for i,l in s["classes"].items():
+                
+                if i in html[file]:
+                    used.append({i:l})
+                    
+                else:
+                    unused.append({i:l})
+                  
     if used:
-        print("used css:")
+        print("        used css:")
         for l in used:
             for key in l:
-                print(key, "on line", l[key])
-
+                lines = str(l[key]).strip("[]")
+                print("            ", key, "on line(s)", lines)
+ 
     if unused:
-        print("unused css:")
+        print("        unused css:")
         for l in unused:
             for key in l:
-                print(key, "on line", l[key])
+                lines = str(l[key]).strip("[]")
+                print("            ", key, "on line(s)", lines)
+                
+if filesnotfound:
+    
+    print("Files not found:")
+                    
+    for l in filesnotfound:
+        print("    ",l)
+        for files in filesnotfound[l]:
+            print("        ",files)
