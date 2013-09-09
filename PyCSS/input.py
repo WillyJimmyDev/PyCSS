@@ -12,6 +12,7 @@ STOPPARSING = False
 html = {}
 css = {}
 filesnotfound = {}
+encodingerrors = []
 
 class MyHTMLParser(HTMLParser):
     
@@ -108,7 +109,7 @@ for ext in exts:
     else:
         files = glob.glob(userdir + "*." + ext)
     
-    print("number of files searched:", len(files))
+    print("number of files found:", len(files))
     for file in files:
         
         parser = MyHTMLParser(file, css, strict=False)
@@ -143,9 +144,11 @@ for ext in exts:
                 linenum = linenum + 1
               
             if cssfound:
-                html[file] = filecss 
-        except UnicodeDecodeError as e:
-            print(e)
+                html[file] = filecss
+                 
+        except UnicodeDecodeError:
+            if not file in encodingerrors:
+                encodingerrors.append(file)
 
 for file in html:
     
@@ -196,3 +199,8 @@ if filesnotfound:
         print("    ",l)
         for files in filesnotfound[l]:
             print("        ",files)
+
+if encodingerrors:
+    print("Files found with encoding errors (not utf-8): ")
+    for f in encodingerrors:
+        print(f)
