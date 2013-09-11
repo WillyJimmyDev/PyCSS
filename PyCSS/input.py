@@ -20,6 +20,7 @@ encodingerrors = []
 #userdir = input("Enter a directory to search:\n")
 userdir = "/home/elanman/www/"
 
+# if we can't find the directory, prompt the user for another
 while not os.path.isdir(userdir):
     print("Can't find the specified directory\nMake sure you entered the path correctly\n")
     userdir = input("Enter a directory to search:\n")
@@ -32,6 +33,7 @@ exts = userexts.split(",")
 for ext in exts:
     print ("Searching file extension... ", ext)
     
+    #redursive search of user directory or not
     if RECURSIVE:
         files = [os.path.join(dirpath, f)
                  for dirpath, dirnames, files in os.walk(userdir)
@@ -83,14 +85,15 @@ for ext in exts:
 for file in html:
     
     print("processing ...", file)
-    used = []
-    unused = []
     
     if file in css:
-        
+    
         for c,s in css[file].items():
-            print("    css file is", c)
-            #need to add css file for each used /unused
+            
+            used = []
+            unused = []
+    
+            #l is the list of line numbers
             for i,l in s["ids"].items():
                 
                 if i in html[file]:
@@ -106,20 +109,23 @@ for file in html:
                     
                 else:
                     unused.append({i:l})
-                  
-    if used:
-        print("        used css:")
-        for l in used:
-            for key in l:
-                lines = str(l[key]).strip("[]")
-                print("            ", key, "on line(s)", lines)
- 
-    if unused:
-        print("        unused css:")
-        for l in unused:
-            for key in l:
-                lines = str(l[key]).strip("[]")
-                print("            ", key, "on line(s)", lines)
+                    
+            if used or unused:
+                print("    searching css file:", c)
+                
+            if used:
+                print("        used css:")
+                for l in used:
+                    for key in l:
+                        lines = str(l[key]).strip("[]")
+                        print("            ", key, "on line(s)", lines)
+     
+            if unused:
+                print("        unused css:")
+                for l in unused:
+                    for key in l:
+                        lines = str(l[key]).strip("[]")
+                        print("            ", key, "on line(s)", lines)
                 
 if filesnotfound:
     
