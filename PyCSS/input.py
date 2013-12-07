@@ -33,7 +33,7 @@ exts = userexts.split(",")
 for ext in exts:
     print ("Searching file extension... ", ext)
     
-    #redursive search of user directory or not
+    #recursive search of user directory or not
     if RECURSIVE:
         files = [os.path.join(dirpath, f)
                  for dirpath, dirnames, files in os.walk(userdir)
