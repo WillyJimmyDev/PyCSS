@@ -21,12 +21,13 @@ encodingerrors = []
 userdir = "/home/elanman/www/"
 
 # if we can't find the directory, prompt the user for another
+# need to allow for individual files too
 while not os.path.isdir(userdir):
     print("Can't find the specified directory\nMake sure you entered the path correctly\n")
     userdir = input("Enter a directory to search:\n")
 
 #userexts = input("Enter a comma separated list of file extensions to search in e.g php,html\n")
-userexts = "html"
+userexts = "html,php"
     
 exts = userexts.split(",")
 

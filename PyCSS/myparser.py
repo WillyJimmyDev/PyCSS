@@ -44,8 +44,8 @@ class MyHTMLParser(HTMLParser):
                             csslinenum = 1
                             for line in csscontent:
                                 
-                                ids = re.findall(r'^(#\w+)\s*[^;]{?', line)
-                                classes = re.findall(r'^(\.\w+)\s*{?', line)
+                                ids = re.findall(r'^(#\w+)\s*[^;]\{?', line)
+                                classes = re.findall(r'^(\.\w+)\s*\{?', line)
                                 
                                 for theid in ids:
                                     if theid not in idoccurrences:
