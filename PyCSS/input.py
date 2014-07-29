@@ -21,14 +21,13 @@ encodingerrors = []
 userdir = "/home/elanman/www/"
 
 # if we can't find the directory, prompt the user for another
-# need to allow for individual files too
 while not os.path.isdir(userdir):
     print("Can't find the specified directory\nMake sure you entered the path correctly\n")
     userdir = input("Enter a directory to search:\n")
 
 #userexts = input("Enter a comma separated list of file extensions to search in e.g php,html\n")
-userexts = "html,php"
-    
+userexts = "html"
+
 exts = userexts.split(",")
 
 for ext in exts:
@@ -74,7 +73,7 @@ for ext in exts:
                         htmlid = "#" + htmlid
                         filecss[htmlid] = linenum
                         
-                linenum = linenum + 1
+                linenum += 1
               
             if cssfound:
                 html[file] = filecss
@@ -98,18 +97,18 @@ for file in html:
             for i,l in s["ids"].items():
                 
                 if i in html[file]:
-                    used.append({i:l})
+                    used.append({i: l})
                     
                 else:
-                    unused.append({i:l})
+                    unused.append({i: l})
                     
             for i,l in s["classes"].items():
                 
                 if i in html[file]:
-                    used.append({i:l})
+                    used.append({i: l})
                     
                 else:
-                    unused.append({i:l})
+                    unused.append({i: l})
                     
             if used or unused:
                 print("    searching css file:", c)
@@ -133,9 +132,9 @@ if filesnotfound:
     print("Files not found:")
                     
     for l in filesnotfound:
-        print("    ",l)
+        print("    ", l)
         for files in filesnotfound[l]:
-            print("        ",files)
+            print("        ", files)
 
 if encodingerrors:
     print("Files found with encoding errors (not utf-8): ")
