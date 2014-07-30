@@ -88,13 +88,13 @@ for file in html:
     
     if file in css:
     
-        for c,s in css[file].items():
+        for c, s in css[file].items():
             
             used = []
             unused = []
     
             #l is the list of line numbers
-            for i,l in s["ids"].items():
+            for i, l in s["ids"].items():
                 
                 if i in html[file]:
                     used.append({i: l})
@@ -102,7 +102,7 @@ for file in html:
                 else:
                     unused.append({i: l})
                     
-            for i,l in s["classes"].items():
+            for i, l in s["classes"].items():
                 
                 if i in html[file]:
                     used.append({i: l})
