@@ -8,6 +8,7 @@ filesnotfound = {}
 #dictionary of all classes and ids found in linked css files
 css = {}
 
+
 class MyHTMLParser(HTMLParser):
     
     def __init__(self, afile=None, cssdict=None, **kwds):
@@ -22,10 +23,10 @@ class MyHTMLParser(HTMLParser):
             
             for attr in attrs:
                 
-                if (attr[0] == 'href'):
+                if attr[0] == 'href':
                     
                     extension = os.path.splitext(attr[1])[1]
-                    if (extension == '.css'):
+                    if extension == '.css':
                     
                         newfile = os.path.join(os.path.dirname(self.afile), attr[1])
 
@@ -60,7 +61,7 @@ class MyHTMLParser(HTMLParser):
                                     else:
                                         classoccurrences[theclass].append(csslinenum)
                                 
-                                csslinenum = csslinenum + 1
+                                csslinenum += 1
                                 
                             self.cssfound[cssfile]["ids"] = idoccurrences
                             self.cssfound[cssfile]["classes"] = classoccurrences
@@ -78,5 +79,6 @@ class MyHTMLParser(HTMLParser):
         return css
                                     
     def handle_endtag(self, tag):
+        global STOPPARSING
         if tag == 'head':
             STOPPARSING = True

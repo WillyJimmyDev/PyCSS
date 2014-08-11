@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import glob
 import re
@@ -25,13 +25,14 @@ while not os.path.isdir(userdir):
     print("Can't find the specified directory\nMake sure you entered the path correctly\n")
     userdir = input("Enter a directory to search:\n")
 
+#failing to parse php files
 #userexts = input("Enter a comma separated list of file extensions to search in e.g php,html\n")
 userexts = "html"
 
 exts = userexts.split(",")
 
 for ext in exts:
-    print ("Searching file extension... ", ext)
+    print("Searching file extension... ", ext)
     
     #recursive search of user directory or not
     if RECURSIVE:
