@@ -115,3 +115,9 @@ ENV/
 PyCSS/.idea/
 input.pyc
 myparser.pyc
+.idea/encodings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/pyCSS.iml
+.idea/vcs.xml
+.idea/workspace.xml
