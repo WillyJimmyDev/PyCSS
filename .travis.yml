@@ -5,4 +5,4 @@ python:
   - "3.4"
   - "3.5"
 install:
-  - pip install . --use-mirrors
+  - pip install . --index-url
