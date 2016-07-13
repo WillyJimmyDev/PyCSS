@@ -3,39 +3,36 @@ import re
 from html.parser import HTMLParser
 
 
-class MyHTMLParser(HTMLParser):
+class PyCSSParser(HTMLParser):
 
     def error(self, message):
+        # should do logging here
         pass
+
+    # dictionary of css files not found and which (html) file they were linked from
+    cssfilesnotfound = {}
+
+    # dict of cssclasses
+    cssclasses = {}
+
+    cssfound = {}
     
-    def __init__(self, afile=None, **kwds):
-        super().__init__(**kwds)
-        self.afile = afile
-        self.cssfound = {}
-        # set to True when we reach the end of the <head> section no more css files to find?
-        self.stopparsing = False
+    def __init__(self, afile=None):
+        self.html_filename = afile
+        super().__init__()
 
-        # dictionary of css files not found and which (html) file they were linked from
-        self.filesnotfound = {}
-
-        # dict of cssclasses
-        self.cssclasses = {}
-        
     def handle_starttag(self, tag, attrs):
 
         if tag != 'link':
             return
             
-        for attr in attrs:
+        for key, value in attrs:
 
-            if attr[0] == 'href':
+            if key == 'href':
 
-                extension = os.path.splitext(attr[1])[1]
-                if extension == '.css':
+                if '.css' == os.path.splitext(value)[1]:
 
-                    newfile = os.path.join(os.path.dirname(self.afile), attr[1])
-
-                    cssfile = os.path.abspath(newfile)
+                    cssfile = os.path.abspath(os.path.join(os.path.dirname(self.html_filename), value))
 
                     self.cssfound[cssfile] = {'ids': {}, 'classes': {}}
                     idoccurrences = {}
@@ -43,39 +40,33 @@ class MyHTMLParser(HTMLParser):
 
                     try:
                         with open(cssfile, "r") as csshandle:
-                            csslinenum = 1
-                            for line in csshandle.readlines():
+
+                            for linenumber, line in enumerate(csshandle.readlines()):
+
+                                linenumber += 1
 
                                 ids = re.findall(r'^(#\w+)\s*[^;]\{?', line)
                                 classes = re.findall(r'^(\.\w+)\s*\{?', line)
 
                                 for theid in ids:
                                     if theid not in idoccurrences:
-                                        idoccurrences[theid] = [csslinenum]
+                                        idoccurrences[theid] = [linenumber]
                                     else:
-                                        idoccurrences[theid].append(csslinenum)
+                                        idoccurrences[theid].append(linenumber)
                                 for theclass in classes:
                                     if theclass not in classoccurrences:
-                                        classoccurrences[theclass] = [csslinenum]
+                                        classoccurrences[theclass] = [linenumber]
                                     else:
-                                        classoccurrences[theclass].append(csslinenum)
+                                        classoccurrences[theclass].append(linenumber)
 
-                                csslinenum += 1
-
-                            self.cssfound[cssfile]["ids"] = idoccurrences
-                            self.cssfound[cssfile]["classes"] = classoccurrences
+                        self.cssfound[cssfile]["ids"] = idoccurrences
+                        self.cssfound[cssfile]["classes"] = classoccurrences
 
                     except (OSError, IOError):
-                        if self.afile in self.filesnotfound:
-                            self.filesnotfound[self.afile].append(cssfile)
+                        if self.html_filename in self.cssfilesnotfound:
+                            self.cssfilesnotfound[self.html_filename].append(cssfile)
                         else:
-                            self.filesnotfound[self.afile] = [cssfile]
-
-        self.cssclasses[self.afile] = self.cssfound
+                            self.cssfilesnotfound[self.html_filename] = [cssfile]
         
-        return self.cssclasses
-                                    
-    def handle_endtag(self, tag):
+        self.cssclasses[self.html_filename] = self.cssfound
 
-        if tag == 'head':
-            self.stopparsing = True
