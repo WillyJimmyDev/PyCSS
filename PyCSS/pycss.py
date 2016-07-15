@@ -21,17 +21,21 @@ class PyCSS:
         self.cssfilesnotfound = {}
         self.css_selectors = {}
 
-    def update_status_bar(self, *args):
+    @staticmethod
+    def update_status_bar(*args):
         _css_files.set(())
-        selected_file = _file_listbox.curselection()  # curselection() returns a tuple
+        selected_file = _file_listbox.get(_file_listbox.curselection())
         if selected_file:
-            _status_msg.set(self.fetched_files[selected_file[0]])
+            _status_msg.set(selected_file)
 
     def show_about_window(self, *args):
         self.gui.show_about_window(*args)
 
     def show_css_details(self, *args):
-        self.gui.show_css_details(_menubar, *args)
+        selected_css_file = _css_listbox.get(_css_listbox.curselection())
+        if selected_css_file:
+            details = [selected_css_file, self.used, self.unused]
+            self.gui.show_css_details(_menubar, *details)
 
     def get_directory(self):
         self.gui.get_directory(_directory)
